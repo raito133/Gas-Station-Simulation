@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -Wall -g -pthread -lncurses
 
-all: main clean
+all: main
 
 main: main.o Car.o DeliveryCar.o Numerable.o Stall.o Tank.o
 	$(CXX) $(CXXFLAGS) -o main main.o Car.o DeliveryCar.o Numerable.o Stall.o Tank.o
@@ -16,4 +16,5 @@ Stall.o : Stall.h
 
 Tanko.o : Tank.h 
 
-clean: rm -f *o
+clean: 
+	rm *.o main
