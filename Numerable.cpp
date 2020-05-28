@@ -7,5 +7,6 @@ Numerable::Numerable(const int x) : number(x)
 
 int Numerable::get_number()
 {
+    std::lock_guard<std::mutex> (*m);
     return number;
 }

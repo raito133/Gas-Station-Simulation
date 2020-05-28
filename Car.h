@@ -16,11 +16,15 @@ class Car : public Numerable
     std::mutex* mutex; 
     Tank* tank;
     std::vector<Stall>& pumps;
+    std::vector<Stall>& parking;
     int acquired_pump;
+    int acquired_parking;
     void check_running();
+    int ticket;
+    int chosen_pump;
 
 public:
-    Car(int numb, Tank* tank, std::vector<Stall> &pumps);
+    Car(int numb, Tank* tank, std::vector<Stall> &pumps, std::vector<Stall> &parkptr);
     void live();
     std::thread live_thread();
     void wait();
@@ -28,5 +32,9 @@ public:
     int get_progress();
     int get_status();
     int get_pump();
+    int get_parking();
     void fetch_pump();
+    void park();
+    int get_ticket();
+    int get_chosen_pump();
 };

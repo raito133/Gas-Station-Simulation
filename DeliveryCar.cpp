@@ -1,10 +1,11 @@
 #include "DeliveryCar.h"
 
-DeliveryCar::DeliveryCar(Tank* tankptr)
+DeliveryCar::DeliveryCar(Tank* tankptr, std::vector<Stall> &parkingvec) : parking(parkingvec)
 {
     status = 1;
     this->tank = tankptr;
     mutex = new std::mutex();
+    acquired_parking = -1;
 }
 
 void DeliveryCar::wait()
@@ -32,7 +33,7 @@ void DeliveryCar::refuel()
     int max_volume = tank->get_max_volume();
     // calculating progress
     progress = max_volume;
-
+    
     while(tank->get_current_volume()<max_volume)
     {
         mutex->lock();
@@ -41,6 +42,8 @@ void DeliveryCar::refuel()
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         tank->set_current_volume(tank->get_current_volume()+10);
     }
+    parking[acquired_parking].set_available(true);
+    acquired_parking = -1;
 }
 
 void DeliveryCar::live()
@@ -48,8 +51,12 @@ void DeliveryCar::live()
     do
     {
         wait();
+        
         if(tank->get_current_volume() == 0)
+        {
+            park();
             refuel();
+        }
 
     } while(deliveryCar_running);
     
@@ -70,4 +77,27 @@ int DeliveryCar::get_status()
 {
     std::lock_guard<std::mutex> lock(*mutex);
     return status;
+}
+
+void DeliveryCar::park()
+{
+    status = 4;
+    for(int i = 0; acquired_parking == -1; i++)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        int number = parking[i].try_to_take();
+        if (number != -1)
+        {
+            acquired_parking = number;
+            break;
+        }
+        if (i == parking.size() - 1)
+            i = -1;
+    }
+}
+
+int DeliveryCar::get_parking()
+{
+    std::lock_guard<std::mutex> lock(*mutex);
+    return acquired_parking;
 }

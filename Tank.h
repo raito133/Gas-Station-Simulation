@@ -15,5 +15,6 @@ public:
     int get_current_volume();
     void set_current_volume(int volume);
     void refuel();
+    bool tank(int volume);
 
 };

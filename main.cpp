@@ -14,6 +14,9 @@
 
 int CARS_NUMBER;
 int PUMPS_NUMBER = 2;
+int PLACES_NUMBER = 5;
+int CHECKOUT_NUMBER = 2;
+
 // zmienne do ncurses
 #define AVAILABLE_PAIR 1
 #define UNAVAILABLE_PAIR 2
@@ -24,7 +27,7 @@ Tank* tank;
 DeliveryCar* deliveryCar;
 std::vector<Car> cars;
 std::vector<Stall> pumps;
-
+std::vector<Stall> parking_places;
 
 bool running_screen = true;
 std::mutex m;
@@ -34,6 +37,19 @@ void refresh_screen()
 {
     int tank_max = tank->get_max_volume();
     char buffer[50];
+    std::vector<int> positions;
+    for(int i = 0; i< CARS_NUMBER; i++)
+    {
+        if(i%2 != 0)
+        {
+            positions.push_back(i*10);
+        }
+        else
+        {
+            positions.push_back(50-i*10);
+        }
+        
+    }
     while(true)
     {
         clear();
@@ -54,19 +70,32 @@ void refresh_screen()
         {
             mvprintw(1, 25, "Refueling...");
         }
+        else if (deliveryCar_status == 4)
+        {
+            mvprintw(1, 25, "Parking...");
+        }
         std::sprintf(buffer, "%d", deliveryCar->get_progress());
         mvprintw(1, 50, buffer);
+        int pnumber = deliveryCar->get_parking();
+        if(deliveryCar->get_parking() != -1)
+        {
+            mvprintw(2, 80+(pnumber*3), "D");
+        }
 
         //cars
         mvprintw(2,0, "Cars: ");
-
+        int not_riding_cars = 0;
         for(int i = 0; i<CARS_NUMBER; i++)
         {
+            
+           
+            
             std::sprintf(buffer, "Car%d:", i+1);
             mvprintw(2+i, 0, buffer);
             if(cars[i].get_status() == 0)
             {
                 mvprintw(2+i, 25, "Refueling...");
+                not_riding_cars++;
             }
             else if (cars[i].get_status() == 1)
             {
@@ -75,16 +104,83 @@ void refresh_screen()
             else if (cars[i].get_status() == 2)
             {
                 mvprintw(2+i, 25, "Waiting for a pump...");
+                not_riding_cars++;
             }
             std::sprintf(buffer, "%d", cars[i].get_progress());
             mvprintw(2+i, 50, buffer);
             int pump_number = cars[i].get_pump();
-            if(pump_number != -1)
+            int parking_place_number = cars[i].get_parking();
+            if(parking_place_number != -1)
             {
-                std::sprintf(buffer, "Pump:%d", cars[i].get_pump());
-                mvprintw(2+i, 90, buffer);
+                std::sprintf(buffer, "%d", i);
+                mvprintw(2, 80+(parking_place_number*3), buffer);
             }
+
+            int ticket = cars[i].get_ticket();
+            if(ticket != -1)
+            {
+                std::sprintf(buffer, "Ticket:%d", cars[i].get_ticket());
+                mvprintw(2+i, 57, buffer);
+                if(cars[i].get_chosen_pump() == 0)
+                {
+                    int offset1 = cars[i].get_ticket() - pumps[0].print_current_ticket();
+                    std::sprintf(buffer, "%d", i+1);
+                    mvprintw(14+0, 20+offset1, buffer);
+
+                }
+                if(cars[i].get_chosen_pump() == 1)
+                {
+                    int offset2 = cars[i].get_ticket() - pumps[1].print_current_ticket();
+                    std::sprintf(buffer, "%d", i+1);
+                    mvprintw(14+1, 20+offset2, buffer);
+                }
+               
+            }
+
+            if(positions[i] > 100)
+                positions[i] = 0;
+            if(positions[i] < 0)
+                positions[i] = 100;
+
+            std::sprintf(buffer, "%d:", i+1);
+            if(i%2 == 0)
+            {
+                positions[i]--;
+                if(cars[i].get_status() != 0)
+                {
+                    mvprintw(9, positions[i], buffer);
+                }
+            } 
+            else
+            {
+                positions[i]++;
+                if(cars[i].get_status() != 0)
+                {
+                    mvprintw(11, positions[i], buffer);
+                }
+            }
+
             
+        }
+        mvprintw(0, 80, "PARKING");
+        for(int i = 0; i<PLACES_NUMBER; i++)
+        {
+            std::sprintf(buffer, "P%d", i);
+            mvprintw(1, 80+(i*3), buffer);
+        }
+
+        for(int i = 0; i< PUMPS_NUMBER; i++)
+        {
+            int current_ticket = pumps[i].print_current_ticket();
+            std::sprintf(buffer, "Pump:%d, Ticket:%d", i, pumps[i].print_current_ticket());
+            mvprintw(14+i, 0, buffer);
+        }
+
+        for(int i = 0; i < 100; i++)
+        {
+            mvprintw(8, 0+i, "#");
+            mvprintw(10, 0+i, "-");
+            mvprintw(12, 0+i, "#");
         }
 
         refresh();
@@ -139,14 +235,20 @@ int main(int argc, char *argv[])
         pumps.push_back(Stall(i));
     }
 
+    //inicjalizacja miejsc parkingowych
+    for(int i = 0; i<PLACES_NUMBER; i++)
+    {
+        parking_places.push_back(Stall(i));
+    }
+
     // inicjalizacja samochodow
     for(int i = 0; i<CARS_NUMBER; i++) 
     {
-        cars.push_back(Car(i, tank, pumps));
+        cars.push_back(Car(i, tank, pumps, parking_places));
     }
 
     // inicjalizacja samochodu dostawczego
-    deliveryCar = new DeliveryCar(tank);
+    deliveryCar = new DeliveryCar(tank, parking_places);
     std::thread deliveryCar_thread = deliveryCar->live_thread();
 
     // inicjalizacja watkow samochodow

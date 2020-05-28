@@ -24,3 +24,19 @@ void Tank::set_current_volume(int volume)
     current_volume = volume;
     return;
 }
+
+bool Tank::tank(int volume)
+{
+    std::lock_guard<std::mutex> lock(*m);
+    if(current_volume < 100)
+    {
+        return false;
+    }
+    else
+    {
+        current_volume -= 100;
+        return true;
+    }
+    
+    
+}

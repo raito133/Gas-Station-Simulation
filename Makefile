@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -g -pthread -lncurses
+CXXFLAGS = -Wall -g -pthread -lncurses -Wl,--no-as-needed
 
 all: main
 
