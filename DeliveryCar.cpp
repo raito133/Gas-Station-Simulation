@@ -25,7 +25,7 @@ void DeliveryCar::wait()
     }
 }
 
-
+// refuel the cistern
 void DeliveryCar::refuel()
 {
     status = 0;
@@ -62,23 +62,7 @@ void DeliveryCar::live()
     
 }
 
-std::thread DeliveryCar::live_thread()
-{
-    return std::thread(&DeliveryCar::live, this);
-}
-
-int DeliveryCar::get_progress()
-{
-    std::lock_guard<std::mutex> lock(*mutex);
-    return progress;
-}
-
-int DeliveryCar::get_status()
-{
-    std::lock_guard<std::mutex> lock(*mutex);
-    return status;
-}
-
+// try to aquire a parking place
 void DeliveryCar::park()
 {
     status = 4;
@@ -96,8 +80,27 @@ void DeliveryCar::park()
     }
 }
 
+std::thread DeliveryCar::live_thread()
+{
+    return std::thread(&DeliveryCar::live, this);
+}
+
+// getters
+
 int DeliveryCar::get_parking()
 {
     std::lock_guard<std::mutex> lock(*mutex);
     return acquired_parking;
+}
+
+int DeliveryCar::get_progress()
+{
+    std::lock_guard<std::mutex> lock(*mutex);
+    return progress;
+}
+
+int DeliveryCar::get_status()
+{
+    std::lock_guard<std::mutex> lock(*mutex);
+    return status;
 }

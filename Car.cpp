@@ -28,10 +28,14 @@ void Car::wait()
     }
 }
 
+// get a place in queue
+
 void Car::fetch_pump()
 {
     status = 2;
     chosen_pump = -1;
+    // choose a pump with less tickets printed by far
+    // unsafe: no guarantee that the first pump has printed out more tickets than the second etc.
     if(pumps[0].print_ticket() > pumps[1].print_ticket())
     {
         chosen_pump = 1;
@@ -41,6 +45,8 @@ void Car::fetch_pump()
         chosen_pump = 0;
     }
     ticket = pumps[chosen_pump].get_ticket();
+    
+    // wait until the pump is free
     while(acquired_pump == -1)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -53,6 +59,8 @@ void Car::fetch_pump()
     }
 }
 
+// try to aquire a parking place
+
 void Car::park()
 {
     status = 4;
@@ -60,6 +68,7 @@ void Car::park()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         int number = parking[i].try_to_take();
+        // if succesful 
         if (number != -1)
         {
             acquired_parking = number;
@@ -70,6 +79,7 @@ void Car::park()
     }
 }
 
+// simulate refueling
 void Car::refuel()
 {
     
@@ -121,11 +131,14 @@ void Car::live()
     } while(true);
 }
 
+// entry point
+
 std::thread Car::live_thread()
 {
     return std::thread(&Car::live, this);
 }
 
+// getters 
 
 int Car::get_progress()
 {

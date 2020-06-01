@@ -17,9 +17,6 @@ int PUMPS_NUMBER = 2;
 int PLACES_NUMBER = 5;
 int CHECKOUT_NUMBER = 2;
 
-// zmienne do ncurses
-#define AVAILABLE_PAIR 1
-#define UNAVAILABLE_PAIR 2
 bool running;
 bool deliveryCar_running = true;
 
@@ -32,7 +29,7 @@ std::vector<Stall> parking_places;
 bool running_screen = true;
 std::mutex m;
 
-// wątek odświeżania ekranu
+// printing function (ncurses)
 void refresh_screen()
 {
     int tank_max = tank->get_max_volume();
@@ -88,8 +85,6 @@ void refresh_screen()
         for(int i = 0; i<CARS_NUMBER; i++)
         {
             
-           
-            
             std::sprintf(buffer, "Car%d:", i+1);
             mvprintw(2+i, 0, buffer);
             if(cars[i].get_status() == 0)
@@ -115,7 +110,6 @@ void refresh_screen()
                 std::sprintf(buffer, "%d", i);
                 mvprintw(2, 80+(parking_place_number*3), buffer);
             }
-
             int ticket = cars[i].get_ticket();
             if(ticket != -1)
             {
@@ -192,6 +186,7 @@ void refresh_screen()
     }
 }
 
+// input thread
 void input()
 {
     char ch = getch();
@@ -223,41 +218,37 @@ int main(int argc, char *argv[])
     curs_set(0);
     start_color();
     use_default_colors();
-    init_pair(AVAILABLE_PAIR, COLOR_GREEN, -1);
-    init_pair(UNAVAILABLE_PAIR, COLOR_RED, -1);
     running = true;
-    //inicjalizacja cysterny
+
+    // initializing objects ------------------------------------------------------------------
     tank = new Tank(500);
 
-    //inicjalizacja dystrybutorow
     for(int i = 0; i<PUMPS_NUMBER; i++)
     {
         pumps.push_back(Stall(i));
     }
 
-    //inicjalizacja miejsc parkingowych
     for(int i = 0; i<PLACES_NUMBER; i++)
     {
         parking_places.push_back(Stall(i));
     }
 
-    // inicjalizacja samochodow
     for(int i = 0; i<CARS_NUMBER; i++) 
     {
         cars.push_back(Car(i, tank, pumps, parking_places));
     }
-
-    // inicjalizacja samochodu dostawczego
+    
+    // start deliveryCar thread
     deliveryCar = new DeliveryCar(tank, parking_places);
     std::thread deliveryCar_thread = deliveryCar->live_thread();
 
-    // inicjalizacja watkow samochodow
+    // start cars threads
     for(int i = 0; i<CARS_NUMBER; i++)
     {
         car_threads.push_back(cars[i].live_thread());
     }
 
-    // start watkow obrazu i inputu
+    // start input and screen threads
     std::thread screen(refresh_screen);
     std::thread handle_input(input);
 

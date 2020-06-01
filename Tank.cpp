@@ -25,16 +25,17 @@ void Tank::set_current_volume(int volume)
     return;
 }
 
+// deduct by given number
 bool Tank::tank(int volume)
 {
     std::lock_guard<std::mutex> lock(*m);
-    if(current_volume < 100)
+    if(current_volume < volume)
     {
         return false;
     }
     else
     {
-        current_volume -= 100;
+        current_volume -= volume;
         return true;
     }
     

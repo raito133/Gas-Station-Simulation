@@ -7,18 +7,7 @@ Stall::Stall(int x) : Numerable(x)
     current_ticket = 0;
 }
 
-bool Stall::get_available()
-{
-    std::lock_guard<std::mutex> lock(*m);
-    return available;
-}
-
-void Stall::set_available(bool status)
-{
-    std::lock_guard<std::mutex> lock(*m);
-    available = status;
-}
-
+// try to acquire the stall
 int Stall::try_to_take()
 {
     std::lock_guard<std::mutex> lock(*m);
@@ -31,6 +20,7 @@ int Stall::try_to_take()
     }
 }
 
+// this function frees the pump after use
 int Stall::finish()
 {
     std::lock_guard<std::mutex> lock(*m);
@@ -38,6 +28,7 @@ int Stall::finish()
     current_ticket++;
 }
 
+// if it's the cars turn, return the number
 int Stall::try_to_take_pump(int ticket)
 {
     std::lock_guard<std::mutex> lock(*m);
@@ -60,21 +51,15 @@ int Stall::try_to_take_pump(int ticket)
     }
 }
 
+// print the ticket
 int Stall::get_ticket()
 {
     std::lock_guard<std::mutex> lock(*m);
-    if(ticket == -1)
-    {
-        ticket = 0;
-        return 0;
-    }
-    else
-    {
-        ticket++;
-        return ticket;
-    }
-
+    ticket++;
+    return ticket;
 }
+
+// getters
 
 int Stall::print_ticket()
 {
@@ -87,4 +72,16 @@ int Stall::print_current_ticket()
     std::lock_guard<std::mutex> lock(*m);
     return current_ticket;
 
+}
+
+bool Stall::get_available()
+{
+    std::lock_guard<std::mutex> lock(*m);
+    return available;
+}
+
+void Stall::set_available(bool status)
+{
+    std::lock_guard<std::mutex> lock(*m);
+    available = status;
 }
